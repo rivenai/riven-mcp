@@ -1,0 +1,49 @@
+{
+  "name": "@rivenai/riven-mcp",
+  "version": "0.1.0",
+  "description": "Official Riven MCP server — exposes Riven chat, research, council, and usage tools over stdio",
+  "type": "module",
+  "license": "MIT",
+  "author": "RivenAI <opensource@rivenai.io>",
+  "homepage": "https://docs.rivenai.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rivenai/riven-mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/rivenai/riven-mcp/issues"
+  },
+  "keywords": [
+    "riven",
+    "rivenai",
+    "mcp",
+    "model-context-protocol",
+    "llm",
+    "ai"
+  ],
+  "bin": {
+    "riven-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod 755 dist/index.js",
+    "clean": "rm -rf dist",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.11.0"
+  }
+}
