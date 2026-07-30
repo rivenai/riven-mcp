@@ -40,6 +40,9 @@ RUN mkdir -p /var/log/riven-mcp && chown riven:riven /var/log/riven-mcp
 
 WORKDIR /app
 
+# Create empty .env file so pydantic-settings can read it without PermissionError
+RUN touch /app/.env && chown riven:riven /app/.env
+
 # Set environment defaults (can be overridden at runtime)
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
