@@ -57,7 +57,7 @@ services:
       INDEXNOW_HOST: rivenai.io
 
       # ─── On-Prem Health ────────────────────────────────
-      ONPREM_HEALTH_URL: http://onprem-gpu.internal:8000/health
+      ONPREM_HEALTH_URL: http://127.0.0.1:8000/health
 
       # ─── Logging ───────────────────────────────────────
       LOG_LEVEL: INFO
