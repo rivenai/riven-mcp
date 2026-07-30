@@ -73,8 +73,8 @@ class Settings(BaseSettings):
 
     # ─── On-Prem Health ──────────────────────────────────────────────
     onprem_health_url: str = Field(
-        default="http://onprem-gpu.internal:8000/health",
-        description="On-prem GLM model health endpoint",
+        default="http://127.0.0.1:8000/health",
+        description="On-prem GLM model health endpoint. Override with the actual GPU host URL in production.",
     )
 
     # ─── Logging ────────────────────────────────────────────────────

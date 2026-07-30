@@ -50,17 +50,17 @@ async def _get_model_pricing_impl(model: str) -> str:
     provider = data.get("owned_by", data.get("provider", "unknown"))
     context = data.get("context_length", data.get("max_context", "N/A"))
 
-    pricing = data.get("pricing", data.get("price", {}))
+    pricing = data.get("pricing") or {}
 
-    # Per-token prices (Riven uses per-token billing)
-    input_per_token = _to_float(pricing.get("input", pricing.get("prompt", 0)))
-    output_per_token = _to_float(pricing.get("output", pricing.get("completion", 0)))
+    # API returns per-1M-token rates
+    input_per_1m = _to_float(pricing.get("prompt_usd_per_1m", 0))
+    output_per_1m = _to_float(pricing.get("completion_usd_per_1m", 0))
 
-    # Per-1K and per-1M conversions
-    input_per_1k = input_per_token * 1000
-    output_per_1k = output_per_token * 1000
-    input_per_1m = input_per_token * 1_000_000
-    output_per_1m = output_per_token * 1_000_000
+    # Derive per-token and per-1K from per-1M
+    input_per_token = input_per_1m / 1_000_000
+    output_per_token = output_per_1m / 1_000_000
+    input_per_1k = input_per_1m / 1000
+    output_per_1k = output_per_1m / 1000
 
     lines: list[str] = [
         f"# Pricing: {mid}\n",

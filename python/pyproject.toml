@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "riven-mcp-server"
 version = "1.0.0"
-description = "MCP server exposing Riven AI platform capabilities (models, routing, billing) to AI agents"
+description = "MCP server exposing Riven AI platform capabilities (models, routing, usage) to AI agents"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

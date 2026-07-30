@@ -12,8 +12,8 @@ from typing import Any
 from mcp.server import MCPServer
 
 from ..client import RivenAPIError, get_client
-from ..security import get_cost_guardrail, get_client_id as _get_cid
-from ._helpers import tool_handler
+from ..security import get_cost_guardrail
+from ._helpers import get_client_id as _get_cid, tool_handler
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +39,11 @@ def _estimate_cost(
     est_output: int,
     pricing: dict[str, float],
 ) -> float:
-    """Estimate cost based on token counts and per-token pricing."""
-    in_price = pricing.get("input", 0)
-    out_price = pricing.get("output", 0)
-    return (est_input * in_price) + (est_output * out_price)
+    """Estimate cost based on token counts and per-1M-token pricing."""
+    in_per_1m = pricing.get("input_per_1m", 0)
+    out_per_1m = pricing.get("output_per_1m", 0)
+    # Convert per-1M to per-token for multiplication
+    return (est_input * in_per_1m / 1_000_000) + (est_output * out_per_1m / 1_000_000)
 
 
 async def _chat_completion_impl(
@@ -71,10 +72,11 @@ async def _chat_completion_impl(
         models_list = models_data.get("data", []) if isinstance(models_data, dict) else models_data
         for m in models_list:
             if m.get("id") == model:
-                p = m.get("pricing", {})
+                p = m.get("pricing") or {}
+                # API returns per-1M-token rates
                 pricing = {
-                    "input": float(p.get("input", 0)),
-                    "output": float(p.get("output", 0)),
+                    "input_per_1m": float(p.get("prompt_usd_per_1m", 0)),
+                    "output_per_1m": float(p.get("completion_usd_per_1m", 0)),
                 }
                 break
     except Exception:
@@ -129,13 +131,20 @@ async def _chat_completion_impl(
         return f"No completion returned.\n\nFull response: {result}"
 
     choice = choices[0]
-    content = choice.get("message", {}).get("content", "")
+    message = choice.get("message", {})
+    content = message.get("content", "")
+    # Reasoning models (e.g. GLM-4.7) may return reasoning instead of content
+    reasoning = message.get("reasoning", "")
     finish_reason = choice.get("finish_reason", "unknown")
+
+    # If content is empty but reasoning exists, show reasoning
+    if not content and reasoning:
+        content = f"[Reasoning]\n{reasoning}"
 
     summary = (
         f"{content}\n\n"
         f"---\n"
-        f"Model: {model} | Finish: {finish_reason}\n"
+        f"Model: {result.get('model', model)} | Finish: {finish_reason}\n"
         f"Tokens: {actual_input} in / {actual_output} out\n"
         f"Cost: ${actual_cost:.4f}"
     )

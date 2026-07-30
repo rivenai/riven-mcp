@@ -71,10 +71,10 @@ def create_server() -> MCPServer:
         name="riven-mcp-server",
         instructions=(
             "Riven AI MCP Server — provides access to 75+ AI models with "
-            "transparent per-token pricing, intelligent routing, billing, "
+            "transparent per-token pricing, intelligent routing, usage tracking, "
             "and on-prem model health monitoring.\n\n"
             "Tools: list_models, chat_completion, get_usage, compare_models, "
-            "route_request, get_billing, submit_indexnow, check_model_health, "
+            "route_request, submit_indexnow, check_model_health, "
             "get_model_pricing\n\n"
             "Resources: model catalog, pricing sheet, API docs, service status\n\n"
             "Prompts: model selection advisor, cost optimization analyzer, "
@@ -98,7 +98,7 @@ def _register_components(server: MCPServer) -> None:
     from .tools.get_usage import register as _r3  # noqa: F401
     from .tools.compare_models import register as _r4  # noqa: F401
     from .tools.route_request import register as _r5  # noqa: F401
-    from .tools.get_billing import register as _r6  # noqa: F401
+    # get_billing removed — no billing endpoints exist on the live API
     from .tools.submit_indexnow import register as _r7  # noqa: F401
     from .tools.check_model_health import register as _r8  # noqa: F401
     from .tools.get_model_pricing import register as _r9  # noqa: F401

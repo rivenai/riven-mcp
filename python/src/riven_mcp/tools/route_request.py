@@ -49,15 +49,13 @@ async def _route_request_impl(
         result = await client.post("/route", json=body)
     except RivenAPIError as exc:
         # Fallback: try standard chat/completions with auto-routing header
-        if exc.status_code == 404:
+        if exc.status_code in (404, 405):
             try:
                 result = await client.post(
                     "/chat/completions",
                     json={
-                        "model": "auto",
+                        "model": "riven-instant",
                         "messages": messages,
-                        "routing_strategy": strategy,
-                        "fallback": fallback,
                     },
                 )
             except RivenAPIError as exc2:

@@ -33,14 +33,17 @@ async def _list_models_impl() -> str:
 
     for model in models:
         mid = model.get("id", "unknown")
-        mname = model.get("name", mid)
+        mname = model.get("name", model.get("display_name", mid))
         owner = model.get("owned_by", "unknown")
         ctx = model.get("context_length", model.get("max_context", "N/A"))
 
-        # Pricing (per 1K tokens, Riven returns per-token)
-        pricing = model.get("pricing", {})
-        input_price = _format_price(pricing.get("input", 0))
-        output_price = _format_price(pricing.get("output", 0))
+        # Pricing (API returns per-1M-token rates)
+        pricing = model.get("pricing") or {}
+        input_per_1m = pricing.get("prompt_usd_per_1m", 0)
+        output_per_1m = pricing.get("completion_usd_per_1m", 0)
+        # Convert to per-1K for display
+        input_price = _format_per_1k(input_per_1m)
+        output_price = _format_per_1k(output_per_1m)
 
         lines.append(
             f"- **{mid}** ({mname})\n"
@@ -52,14 +55,14 @@ async def _list_models_impl() -> str:
     return "\n".join(lines)
 
 
-def _format_price(per_token: float | str | None) -> str:
-    """Convert per-token price to per-1K-tokens display."""
-    if per_token is None:
+def _format_per_1k(per_1m: float | int | str | None) -> str:
+    """Convert per-1M-token price to per-1K-tokens display."""
+    if per_1m is None:
         return "N/A"
     try:
-        return f"{float(per_token) * 1000:.6f}"
+        return f"{float(per_1m) / 1000:.6f}"
     except (TypeError, ValueError):
-        return str(per_token)
+        return str(per_1m)
 
 
 def register(server: MCPServer) -> None:

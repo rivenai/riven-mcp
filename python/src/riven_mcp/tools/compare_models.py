@@ -53,7 +53,7 @@ async def _compare_models_impl(
     lines: list[str] = [f"# Model Comparison ({len(models)} models)\n"]
 
     # Header
-    valid_criteria = [c for c in criteria if c in ("price", "latency", "capability", "context")]
+    valid_criteria = [c for c in criteria if c in ("price", "pricing", "latency", "capability", "context")]
     if not valid_criteria:
         valid_criteria = ["price", "latency", "capability", "context"]
 
@@ -74,10 +74,10 @@ async def _compare_models_impl(
         row_cells = [mid]
 
         for c in valid_criteria:
-            if c == "price":
-                pricing = m.get("pricing", {})
-                in_p = _to_float(pricing.get("input", 0)) * 1000
-                out_p = _to_float(pricing.get("output", 0)) * 1000
+            if c in ("price", "pricing"):
+                pricing = m.get("pricing") or {}
+                in_p = _to_float(pricing.get("prompt_usd_per_1m", 0)) / 1000
+                out_p = _to_float(pricing.get("completion_usd_per_1m", 0)) / 1000
                 row_cells.append(f"${in_p:.4f}/${out_p:.4f} per 1K")
                 total = in_p + out_p
                 if total < cheapest_cost:

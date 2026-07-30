@@ -55,9 +55,9 @@ class RivenClient:
             self._client = httpx.AsyncClient(
                 base_url=self.base_url,
                 headers={
-                    "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json",
                     "User-Agent": "riven-mcp-server/1.0.0",
+                    **({"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}),
                 },
                 timeout=httpx.Timeout(self.timeout, connect=10.0),
             )

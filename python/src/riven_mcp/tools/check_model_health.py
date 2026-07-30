@@ -56,7 +56,7 @@ async def _check_cloud_health() -> list[dict[str, Any]]:
         for m in models if isinstance(models, list) else []:
             mid = m.get("id", "unknown")
             status = m.get("status", m.get("availability", "available"))
-            if status in ("available", "active", "online", None):
+            if status in ("available", "active", "online", "live", None):
                 results.append({"model": mid, "status": "healthy"})
             else:
                 results.append({"model": mid, "status": status})
@@ -104,14 +104,14 @@ async def _check_model_health_impl(
         if model:
             cloud = [c for c in cloud if c.get("model") == model or model in c.get("model", "")]
 
-        healthy = sum(1 for c in cloud if c.get("status") in ("healthy", "available", "active"))
+        healthy = sum(1 for c in cloud if c.get("status") in ("healthy", "available", "active", "live"))
         total = len(cloud)
         lines.append(f"- {healthy}/{total} models healthy\n")
 
         for entry in cloud[:20]:  # Limit output
             mid = entry.get("model", "unknown")
             st = entry.get("status", "unknown")
-            icon = "OK" if st in ("healthy", "available", "active") else "FAIL"
+            icon = "OK" if st in ("healthy", "available", "active", "live") else "FAIL"
             lines.append(f"- [{icon}] {mid}: {st}")
             if "error" in entry:
                 lines.append(f"  Error: {entry['error']}")
