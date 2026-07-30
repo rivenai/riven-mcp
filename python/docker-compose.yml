@@ -1,0 +1,110 @@
+# Riven MCP Server — Docker Compose for Swarm / standalone deployment
+#
+# Deploy to Docker Swarm:
+#   docker stack deploy -c docker-compose.yml riven-mcp
+#
+# Run standalone:
+#   docker compose up -d
+
+version: "3.9"
+
+services:
+  riven-mcp:
+    image: rivenai/mcp-server:1.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+        reservations:
+          memory: 128M
+          cpus: "0.25"
+      placement:
+        constraints:
+          - node.role != manager
+    environment:
+      # ─── Transport ─────────────────────────────────────
+      MCP_TRANSPORT: http
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: "8080"
+
+      # ─── Riven API (use Docker secrets in production) ──
+      RIVEN_API_BASE_URL: https://api.rivenai.io/v1
+      RIVEN_API_KEY_FILE: /run/secrets/riven_api_key
+
+      # ─── Security ──────────────────────────────────────
+      RATE_LIMIT_MAX_REQUESTS: "100"
+      RATE_LIMIT_WINDOW_SECONDS: "60"
+      COST_GUARDRAIL_PER_REQUEST_USD: "5.00"
+      COST_GUARDRAIL_DAILY_USD: "100.00"
+
+      # ─── IndexNow ───────────────────────────────────────
+      INDEXNOW_API_KEY_FILE: /run/secrets/indexnow_api_key
+      INDEXNOW_HOST: rivenai.io
+
+      # ─── On-Prem Health ────────────────────────────────
+      ONPREM_HEALTH_URL: http://onprem-gpu.internal:8000/health
+
+      # ─── Logging ───────────────────────────────────────
+      LOG_LEVEL: INFO
+      LOG_JSON: "true"
+      AUDIT_LOG_PATH: /var/log/riven-mcp/audit.log
+    ports:
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: ingress
+    volumes:
+      - audit-logs:/var/log/riven-mcp
+    networks:
+      - riven-net
+    secrets:
+      - riven_api_key
+      - indexnow_api_key
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service,environment"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  audit-logs:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: ":/nfs/riven-mcp/audit-logs"
+      o: addr=nfs.internal,rw
+
+networks:
+  riven-net:
+    external: true
+    name: riven-swarm-net
+
+secrets:
+  riven_api_key:
+    external: true
+    name: riven_api_key
+  indexnow_api_key:
+    external: true
+    name: riven_indexnow_api_key
